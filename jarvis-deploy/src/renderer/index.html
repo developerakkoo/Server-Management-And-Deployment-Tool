@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:;">
+  <title>TechLapse Deploy Control</title>
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/500.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/700.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/900.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/500.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/600.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/700.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/jetbrains-mono/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/jetbrains-mono/500.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="diagnostic.css">
+</head>
+<body>
+  <div class="bg-texture" aria-hidden="true"></div>
+  <div class="scanline-global" aria-hidden="true"></div>
+
+  <!-- Custom Titlebar -->
+  <header class="titlebar" id="titlebar">
+    <div class="titlebar-drag">
+      <span class="titlebar-logo">◈</span>
+      <span class="titlebar-title">TECHLAPSE DEPLOY CONTROL</span>
+    </div>
+    <div class="titlebar-controls">
+      <button type="button" class="titlebar-btn" id="btn-settings" title="Settings">⚙</button>
+      <button type="button" class="titlebar-btn" id="btn-minimize" title="Minimize">─</button>
+      <button type="button" class="titlebar-btn" id="btn-maximize" title="Maximize">□</button>
+      <button type="button" class="titlebar-btn titlebar-btn-close" id="btn-close" title="Close">✕</button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard -->
+  <main class="app-main" id="screen-dashboard">
+    <section class="dashboard-header">
+      <div class="header-left">
+        <h1 class="app-title">TECHLAPSE DEPLOY CONTROL</h1>
+        <p class="system-status" id="system-status">SYSTEM ONLINE — --:--:--</p>
+      </div>
+      <div class="header-right">
+        <div class="techlapse-badge">
+          <span class="badge-icon">TL</span>
+          <span class="badge-text">TechLapse</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="projects-grid" id="projects-grid">
+      <!-- Project cards rendered by app.js -->
+    </section>
+
+    <section class="empty-state hidden" id="empty-projects">
+      <div class="empty-icon">◈</div>
+      <h2>NO DEPLOYMENT TARGETS CONFIGURED</h2>
+      <p>Initialize your first server connection to begin automated deployments.</p>
+      <button class="btn btn-primary" id="btn-add-first">ADD PROJECT</button>
+    </section>
+
+    <footer class="dashboard-footer">
+      <button class="btn btn-primary btn-glow" id="btn-add-project">+ ADD PROJECT</button>
+    </footer>
+  </main>
+
+  <!-- Deploy Panel -->
+  <aside class="deploy-panel hidden" id="deploy-panel">
+    <div class="panel-header">
+      <h2 class="panel-title" id="deploy-panel-title">DEPLOY SEQUENCE</h2>
+      <button type="button" class="panel-close" id="deploy-panel-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="deploy-progress" id="deploy-progress">
+      <div class="progress-ring deploying hidden" id="progress-ring"></div>
+      <div class="progress-text">
+        <span id="progress-step">STEP 0 OF 0</span>
+        <span id="progress-name" class="progress-name">AWAITING INITIATION</span>
+      </div>
+    </div>
+
+    <div class="deploy-status-banner hidden" id="deploy-banner"></div>
+    <div class="deploy-error-detail hidden" id="deploy-error-detail"></div>
+
+    <div class="deploy-step-checklist hidden" id="deploy-step-checklist"></div>
+
+    <div class="terminal-wrapper">
+      <div class="terminal" id="deploy-terminal"></div>
+      <div class="terminal-scanlines" aria-hidden="true"></div>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn btn-ghost btn-sm hidden" id="btn-copy-deploy-log">COPY LOG</button>
+      <button class="btn btn-danger hidden" id="btn-cancel-deploy">CANCEL</button>
+      <button class="btn btn-ghost hidden" id="btn-close-deploy">CLOSE</button>
+    </div>
+  </aside>
+  <div class="panel-overlay hidden" id="deploy-overlay"></div>
+
+  <!-- PM2 Live Logs Panel -->
+  <aside class="deploy-panel pm2-logs-panel hidden" id="pm2-logs-panel">
+    <div class="panel-header">
+      <h2 class="panel-title" id="pm2-logs-panel-title">PM2 LOGS</h2>
+      <button type="button" class="panel-close" id="pm2-logs-panel-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="deploy-status-banner hidden" id="pm2-logs-banner"></div>
+
+    <div class="terminal-wrapper">
+      <div class="terminal" id="pm2-logs-terminal"></div>
+      <div class="terminal-scanlines" aria-hidden="true"></div>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn btn-danger hidden" id="btn-stop-pm2-logs">STOP STREAM</button>
+      <button class="btn btn-ghost hidden" id="btn-close-pm2-logs">CLOSE</button>
+    </div>
+  </aside>
+  <div class="panel-overlay hidden" id="pm2-logs-overlay"></div>
+
+  <!-- Project Form Modal -->
+  <dialog class="modal modal-lg" id="project-modal">
+    <div class="modal-header">
+      <h2 id="project-modal-title">ADD PROJECT</h2>
+      <button type="button" class="modal-close" id="project-modal-close" aria-label="Close">✕</button>
+    </div>
+    <form class="modal-body" id="project-form" novalidate>
+      <input type="hidden" id="project-id">
+
+      <div class="form-validation-banner hidden" id="form-validation-banner" role="alert"></div>
+
+      <div class="form-row">
+        <label for="project-name">Project Name <span class="required">*</span></label>
+        <input type="text" id="project-name" placeholder="TechLapse API" aria-describedby="error-project-name">
+      </div>
+
+      <div class="form-row">
+        <label>Project Type <span class="required">*</span></label>
+        <div class="type-toggle strategy-toggle">
+          <button type="button" class="strategy-btn active" data-kind="frontend">FRONTEND</button>
+          <button type="button" class="strategy-btn" data-kind="backend">BACKEND</button>
+        </div>
+        <span class="field-hint" id="kind-hint-frontend">Static site: git pull → build → copy www → chown → nginx reload.</span>
+        <span class="field-hint hidden" id="kind-hint-backend">API/Node: git pull → optional npm install → pm2 restart → nginx reload.</span>
+      </div>
+
+      <div class="form-row server-load-row">
+        <label for="server-load-select">Load Saved Server</label>
+        <div class="input-with-btn">
+          <select id="server-load-select" class="tl-select">
+            <option value="">— Select server to autofill —</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-save-server">SAVE AS SERVER</button>
+        </div>
+        <span class="field-hint">One-click fill host, username, port &amp; credentials from a saved server or existing project</span>
+      </div>
+
+      <div class="form-row form-row-2">
+        <div class="form-field">
+          <label for="project-host">Host <span class="required">*</span></label>
+          <input type="text" id="project-host" placeholder="123.456.789.0">
+        </div>
+        <div class="form-field">
+          <label for="project-port">Port</label>
+          <input type="number" id="project-port" placeholder="22" value="22">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="project-username">SSH Username <span class="required">*</span></label>
+        <input type="text" id="project-username" placeholder="root">
+      </div>
+
+      <div class="form-row">
+        <label>Authentication <span class="required">*</span></label>
+        <div class="type-toggle auth-toggle">
+          <button type="button" class="auth-btn active" data-auth="pem-key">PEM KEY</button>
+          <button type="button" class="auth-btn" data-auth="password">PASSWORD</button>
+        </div>
+      </div>
+
+      <div class="form-row auth-field auth-pem" id="field-pem">
+        <label for="project-key">SSH Private Key <span class="required">*</span></label>
+        <div class="input-with-btn">
+          <input type="text" id="project-key" placeholder="/path/to/key.pem" readonly>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-browse-key">BROWSE</button>
+        </div>
+      </div>
+
+      <div class="form-row auth-field auth-password hidden" id="field-password">
+        <label for="project-password">SSH Password <span class="required">*</span></label>
+        <input type="password" id="project-password" placeholder="Enter SSH password" autocomplete="off">
+        <span class="field-hint hidden" id="password-hint">Leave blank to keep existing password</span>
+      </div>
+
+      <div class="form-row" id="field-remote-path">
+        <label for="project-path">Remote Project Path</label>
+        <input type="text" id="project-path" placeholder="/home/user/projects/my-app">
+        <span class="field-hint">Git repo on server — {{projectPath}}</span>
+      </div>
+
+      <div class="form-row form-row-2">
+        <div class="form-field">
+          <label for="project-branch">Git Branch</label>
+          <input type="text" id="project-branch" placeholder="main" value="main">
+        </div>
+        <div class="form-field" id="field-nginx-user">
+          <label for="project-nginx-user">Nginx User</label>
+          <input type="text" id="project-nginx-user" placeholder="www-data" value="www-data">
+        </div>
+      </div>
+
+      <div class="form-row hidden" id="field-pm2-app">
+        <label for="project-pm2-app">PM2 App Name <span class="required">*</span></label>
+        <input type="text" id="project-pm2-app" placeholder="webtracker-api">
+        <span class="field-hint">PM2 process name on server — {{pm2AppName}}</span>
+      </div>
+
+      <div class="form-row form-row-checkbox hidden" id="field-npm-install">
+        <label class="checkbox-label">
+          <input type="checkbox" id="project-npm-install">
+          Run <code>npm install</code> after git pull on every deploy
+        </label>
+      </div>
+
+      <div class="form-row" id="field-www">
+        <label for="project-www">Live Nginx Path</label>
+        <input type="text" id="project-www" placeholder="/var/www/webtracker-frontend">
+        <span class="field-hint">Used as {{liveWwwPath}} in commands — where nginx serves files</span>
+      </div>
+
+      <div class="form-row" id="field-deploy-commands">
+        <label for="project-deploy-commands" id="project-deploy-commands-label">Deploy Commands <span class="required">*</span></label>
+        <textarea id="project-deploy-commands" class="tl-textarea" rows="10" placeholder="cd {{projectPath}} && git pull"></textarea>
+        <div class="command-snippets" id="command-snippets-frontend">
+          <button type="button" class="snippet-chip" data-snippet="cd {{projectPath}} && git pull">git pull</button>
+          <button type="button" class="snippet-chip" data-snippet="npm run build">build</button>
+          <button type="button" class="snippet-chip" data-snippet="cp -r www/* {{liveWwwPath}}/">cp www</button>
+          <button type="button" class="snippet-chip" data-snippet="chown -R {{nginxUser}}:{{nginxUser}} {{liveWwwPath}}">chown</button>
+          <button type="button" class="snippet-chip" data-snippet="nginx -t && systemctl reload nginx">nginx reload</button>
+        </div>
+        <div class="command-snippets hidden" id="command-snippets-backend">
+          <button type="button" class="snippet-chip" data-snippet="git pull">git pull</button>
+          <button type="button" class="snippet-chip" data-snippet="npm install">npm install</button>
+          <button type="button" class="snippet-chip" data-snippet="pm2 restart {{pm2AppName}}">pm2 restart</button>
+          <button type="button" class="snippet-chip" data-snippet="pm2 status {{pm2AppName}}">pm2 status</button>
+          <button type="button" class="snippet-chip" data-snippet="nginx -t && systemctl reload nginx">nginx reload</button>
+        </div>
+        <span class="field-hint" id="deploy-commands-hint-frontend">One command per line, run on server via SSH. Placeholders: {{projectPath}}, {{liveWwwPath}}, {{nginxUser}}, {{branch}}.</span>
+        <span class="field-hint hidden" id="deploy-commands-hint-backend">One command per line on server. Placeholders: {{projectPath}}, {{pm2AppName}}, {{branch}}.</span>
+      </div>
+
+      <div class="connection-result hidden" id="connection-result"></div>
+      <div class="connection-result hidden" id="preview-result"></div>
+      <div class="connection-result hidden" id="validate-result"></div>
+      <div class="connection-result hidden" id="ready-result"></div>
+
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          <button type="button" class="btn btn-ghost btn-sm btn-ready-check" id="btn-ready-check">READY CHECK</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-test-connection">TEST CONNECTION</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-preview-deploy">PREVIEW COMMANDS</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-validate-paths">VALIDATE PATHS</button>
+        </div>
+        <div class="modal-footer-right">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-project">CANCEL</button>
+          <div class="save-btn-wrap" id="save-btn-wrap" title="">
+            <button type="submit" class="btn btn-primary" id="btn-save-project" disabled>SAVE PROJECT</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Logs Screen -->
+  <section class="logs-screen hidden" id="screen-logs">
+    <div class="logs-header">
+      <button class="btn btn-ghost btn-sm" id="btn-logs-back">← BACK</button>
+      <h2 class="logs-title" id="logs-title">DEPLOY LOGS</h2>
+    </div>
+
+    <div class="logs-list" id="logs-list"></div>
+
+    <section class="empty-state hidden" id="empty-logs">
+      <div class="empty-icon">▤</div>
+      <h2>NO DEPLOYMENT HISTORY</h2>
+      <p>Deploy logs will appear here after your first deployment sequence.</p>
+    </section>
+
+    <footer class="logs-footer">
+      <button class="btn btn-danger btn-ghost" id="btn-clear-logs">CLEAR LOGS</button>
+    </footer>
+  </section>
+
+  <!-- Settings Modal -->
+  <dialog class="modal" id="settings-modal">
+    <div class="modal-header">
+      <h2>SYSTEM SETTINGS</h2>
+      <button type="button" class="modal-close" id="settings-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label for="setting-port">Default SSH Port</label>
+        <input type="number" id="setting-port" value="22">
+      </div>
+      <div class="form-row">
+        <label for="setting-branch">Default Branch</label>
+        <input type="text" id="setting-branch" value="main">
+      </div>
+      <div class="form-row">
+        <label for="setting-deploy-commands">Default Deploy Commands</label>
+        <textarea id="setting-deploy-commands" class="tl-textarea" rows="8"></textarea>
+        <span class="field-hint">Pre-filled for new projects. One command per line with {{placeholders}}.</span>
+      </div>
+      <div class="form-row">
+        <label for="setting-command-timeout">Command Timeout (minutes)</label>
+        <input type="number" id="setting-command-timeout" value="10" min="1" max="120">
+        <span class="field-hint">Max time per deploy command before timeout (default 10 min for builds).</span>
+      </div>
+      <div class="form-row">
+        <label>App Version</label>
+        <span class="version-display" id="app-version">1.0.0</span>
+      </div>
+      <div class="form-row">
+        <label>Saved Server Presets</label>
+        <div class="server-presets-list" id="server-presets-list">
+          <p class="field-hint">No server presets saved yet.</p>
+        </div>
+      </div>
+      <div class="modal-footer settings-footer">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-settings">CANCEL</button>
+        <button type="button" class="btn btn-danger btn-ghost" id="btn-reset-data">RESET ALL DATA</button>
+        <button type="button" class="btn btn-primary" id="btn-save-settings">SAVE</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Deploy Blocked — Missing Tools -->
+  <dialog class="modal modal-lg tools-blocked-modal" id="tools-blocked-modal">
+    <div class="modal-header">
+      <h2>DEPLOY BLOCKED — MISSING TOOLS</h2>
+      <button type="button" class="modal-close" id="tools-blocked-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="tools-blocked-intro">
+        Required CLI tools are not installed on your machine. Install them before deploying.
+      </p>
+      <ul class="tools-blocked-list" id="tools-blocked-list"></ul>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" id="tools-blocked-cancel">CANCEL</button>
+    </div>
+  </dialog>
+
+  <div class="install-guide-overlay hidden" id="install-guide-overlay">
+    <div class="install-guide-panel" id="install-guide-panel" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <script src="install-guide.js"></script>
+  <script src="terminal.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+/* ═══════════════════════════════════════════════════════════
+   JARVIS Deploy Control — System Diagnostic Screen
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --diag-bg: #080a0f;
+  --diag-cyan: #00d4ff;
+  --diag-green: #00ff88;
+  --diag-amber: #ffaa00;
+  --diag-red: #ff4444;
+  --diag-text: #e8f4ff;
+  --diag-dim: rgba(232, 244, 255, 0.55);
+  --diag-muted: rgba(232, 244, 255, 0.35);
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.diag-page {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--diag-text);
+  background: var(--diag-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+html.diag-page {
+  height: 100%;
+  overflow: hidden;
+}
+
+.diag-bg-texture {
+  position: fixed;
+  inset: 0;
+  background: var(--diag-bg) url('../../assets/bg-hex.svg') repeat;
+  background-size: 60px 60px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.diag-scanline {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.diag-sweep-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--diag-cyan),
+    transparent
+  );
+  box-shadow: 0 0 16px var(--diag-cyan), 0 0 4px var(--diag-cyan);
+  opacity: 0.7;
+  z-index: 9999;
+  animation: sweep 2s linear infinite;
+  pointer-events: none;
+}
+
+.diag-sweep-line.done {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+@keyframes sweep {
+  0% { top: 36px; }
+  100% { top: 100%; }
+}
+
+/* Titlebar */
+.diag-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(6, 8, 12, 0.96);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+  z-index: 1000;
+  -webkit-app-region: drag;
+}
+
+.diag-titlebar-drag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 14px;
+}
+
+.diag-logo {
+  color: var(--diag-cyan);
+  font-size: 14px;
+  text-shadow: 0 0 8px var(--diag-cyan);
+}
+
+.diag-titlebar-text {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--diag-dim);
+}
+
+.diag-titlebar-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.diag-titlebar-btn {
+  width: 46px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--diag-dim);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.diag-titlebar-btn:hover {
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--diag-text);
+}
+
+.diag-titlebar-btn-close:hover {
+  background: rgba(255, 68, 68, 0.25);
+  color: var(--diag-red);
+}
+
+/* Main layout */
+.diag-main {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 56px 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.diag-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.diag-app-title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--diag-cyan);
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  margin-bottom: 8px;
+}
+
+.diag-subtitle {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--diag-dim);
+  text-transform: uppercase;
+}
+
+/* Tool list */
+.diag-tool-list {
+  width: 100%;
+  max-width: 900px;
+  flex: 1;
+}
+
+.diag-tool-row {
+  display: grid;
+  grid-template-columns: 40px 140px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease, background 0.3s ease;
+}
+
+.diag-tool-row.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.diag-tool-row.missing {
+  background: rgba(255, 68, 68, 0.06);
+  box-shadow: inset 0 0 24px rgba(255, 68, 68, 0.08);
+}
+
+.diag-tool-icon {
+  font-size: 22px;
+  color: var(--diag-cyan);
+  text-align: center;
+}
+
+.diag-tool-name {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--diag-text);
+}
+
+.diag-tool-desc {
+  font-size: 14px;
+  color: var(--diag-dim);
+  line-height: 1.3;
+}
+
+.diag-status-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: all 0.35s ease;
+}
+
+.diag-status-badge.pending {
+  color: var(--diag-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.diag-status-badge.scanning {
+  color: var(--diag-amber);
+  background: rgba(255, 170, 0, 0.12);
+  animation: pulse-amber 1.2s ease-in-out infinite;
+}
+
+.diag-status-badge.online {
+  color: var(--diag-green);
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.25);
+}
+
+.diag-status-badge.missing {
+  color: var(--diag-red);
+  background: rgba(255, 68, 68, 0.15);
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-amber {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(255, 68, 68, 0.6); }
+}
+
+.diag-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.diag-status-dot.amber {
+  background: var(--diag-amber);
+  box-shadow: 0 0 6px var(--diag-amber);
+  animation: pulse-amber 1s infinite;
+}
+
+.diag-status-dot.green {
+  background: var(--diag-green);
+  box-shadow: 0 0 6px var(--diag-green);
+}
+
+.diag-status-dot.red {
+  background: var(--diag-red);
+  box-shadow: 0 0 6px var(--diag-red);
+  animation: pulse-red 1.2s infinite;
+}
+
+/* Footer states */
+.diag-footer {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 28px;
+  text-align: center;
+}
+
+.diag-nominal-text {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--diag-green);
+  text-shadow: 0 0 24px rgba(0, 255, 136, 0.6);
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.diag-nominal-text::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 40px;
+  background: radial-gradient(ellipse, rgba(0, 255, 136, 0.2), transparent 70%);
+  z-index: -1;
+}
+
+.diag-countdown-bar {
+  height: 3px;
+  background: rgba(0, 255, 136, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.diag-countdown-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--diag-green);
+  box-shadow: 0 0 8px var(--diag-green);
+  transform-origin: left;
+  transition: transform 1.5s linear;
+}
+
+.diag-countdown-fill.counting {
+  transform: scaleX(0);
+}
+
+.diag-alert-banner {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--diag-red);
+  padding: 14px 20px;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  background: rgba(255, 68, 68, 0.08);
+  margin-bottom: 20px;
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(255, 68, 68, 0.45); }
+}
+
+.diag-missing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.diag-btn {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  padding: 10px 18px;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--diag-cyan);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.diag-btn:hover {
+  background: rgba(0, 212, 255, 0.18);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.diag-btn-secondary {
+  border-color: rgba(232, 244, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--diag-dim);
+}
+
+.diag-btn-secondary:hover {
+  color: var(--diag-text);
+  box-shadow: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Install guide modal */
+.install-guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 10, 0.88);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: auto;
+}
+
+.install-guide-overlay.hidden {
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+.install-guide-panel {
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: rgba(10, 14, 22, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  box-shadow: 0 0 40px rgba(0, 212, 255, 0.15), inset 0 0 60px rgba(0, 212, 255, 0.03);
+  padding: 28px 32px;
+}
+
+.ig-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.ig-icon {
+  font-size: 32px;
+  color: var(--diag-cyan);
+}
+
+.ig-title-block h2 {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--diag-text);
+}
+
+.ig-label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--diag-red);
+  margin-top: 4px;
+}
+
+.ig-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ig-tab {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  background: transparent;
+  color: var(--diag-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ig-tab.active {
+  border-color: var(--diag-cyan);
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--diag-cyan);
+}
+
+.ig-preinstalled {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--diag-green);
+  background: rgba(0, 255, 136, 0.1);
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.ig-note {
+  background: rgba(255, 170, 0, 0.1);
+  border-left: 3px solid var(--diag-amber);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: var(--diag-dim);
+  line-height: 1.45;
+}
+
+.ig-steps {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.ig-step {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--diag-dim);
+  line-height: 1.5;
+  padding-left: 4px;
+}
+
+.ig-step-num {
+  color: var(--diag-cyan);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.ig-code-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #050608;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  padding: 10px 12px;
+  margin: 8px 0 12px 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--diag-cyan);
+}
+
+.ig-code-block code {
+  flex: 1;
+  word-break: break-all;
+}
+
+.ig-copy-btn {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 5px 10px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--diag-cyan);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ig-copy-btn.copied {
+  color: var(--diag-green);
+  border-color: var(--diag-green);
+}
+
+.ig-quick-install {
+  margin: 16px 0 20px;
+}
+
+.ig-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.ig-btn {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--diag-cyan);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ig-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.18);
+}
+
+.ig-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ig-btn-danger {
+  border-color: rgba(255, 68, 68, 0.4);
+  color: var(--diag-red);
+  background: rgba(255, 68, 68, 0.08);
+}
+
+.ig-btn-success {
+  border-color: rgba(0, 255, 136, 0.4);
+  color: var(--diag-green);
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.ig-rescan-spinner {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

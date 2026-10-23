@@ -1,0 +1,26 @@
+{
+  "name": "techlapse-deploy-control",
+  "version": "1.0.0",
+  "description": "TechLapse Deploy Control — SSH-based deployment automation for Hostinger servers",
+  "main": "main.js",
+  "author": "Akshay — TechLapse Private Limited",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "postinstall": "node node_modules/electron/install.js && npx @electron/rebuild --only better-sqlite3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "electron-store": "^8.2.0",
+    "ssh2": "^1.16.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}

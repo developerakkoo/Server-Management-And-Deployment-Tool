@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" class="diag-page">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:;">
+  <title>JARVIS Deploy Control — System Diagnostic</title>
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/500.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/700.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/orbitron/900.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/500.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/600.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/rajdhani/700.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/jetbrains-mono/400.css">
+  <link rel="stylesheet" href="../../../node_modules/@fontsource/jetbrains-mono/500.css">
+  <link rel="stylesheet" href="diagnostic.css">
+</head>
+<body class="diag-page">
+  <div class="diag-bg-texture" aria-hidden="true"></div>
+  <div class="diag-scanline" aria-hidden="true"></div>
+  <div class="diag-sweep-line" id="sweep-line" aria-hidden="true"></div>
+
+  <header class="diag-titlebar">
+    <div class="diag-titlebar-drag">
+      <span class="diag-logo">◈</span>
+      <span class="diag-titlebar-text">JARVIS DEPLOY CONTROL</span>
+    </div>
+    <div class="diag-titlebar-controls">
+      <button class="diag-titlebar-btn" id="btn-minimize" title="Minimize">─</button>
+      <button class="diag-titlebar-btn" id="btn-maximize" title="Maximize">□</button>
+      <button class="diag-titlebar-btn diag-titlebar-btn-close" id="btn-close" title="Close">✕</button>
+    </div>
+  </header>
+
+  <main class="diag-main">
+    <header class="diag-header">
+      <h1 class="diag-app-title">JARVIS DEPLOY CONTROL</h1>
+      <p class="diag-subtitle">SYSTEM DIAGNOSTIC — TOOL AVAILABILITY SCAN</p>
+    </header>
+
+    <section class="diag-tool-list" id="tool-list" aria-live="polite">
+      <!-- Rows injected by diagnostic.js -->
+    </section>
+
+    <section class="diag-footer" id="diag-footer">
+      <div class="diag-nominal hidden" id="diag-nominal">
+        <p class="diag-nominal-text">ALL SYSTEMS NOMINAL — INITIALIZING DASHBOARD</p>
+        <div class="diag-countdown-bar">
+          <div class="diag-countdown-fill" id="countdown-fill"></div>
+        </div>
+      </div>
+
+      <div class="diag-warning hidden" id="diag-warning">
+        <div class="diag-alert-banner" id="alert-banner">
+          ⚠ DEPLOYMENT SYSTEM INCOMPLETE — INSTALL MISSING TOOLS TO PROCEED
+        </div>
+        <div class="diag-missing-actions" id="missing-actions"></div>
+        <button type="button" class="diag-btn diag-btn-secondary hidden" id="btn-continue-dashboard">
+          CONTINUE TO DASHBOARD
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div class="install-guide-overlay hidden" id="install-guide-overlay">
+    <div class="install-guide-panel" id="install-guide-panel" role="dialog" aria-modal="true">
+      <!-- Populated by install-guide.js -->
+    </div>
+  </div>
+
+  <script src="install-guide.js"></script>
+  <script src="diagnostic.js"></script>
+</body>
+</html>

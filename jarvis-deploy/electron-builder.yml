@@ -1,0 +1,49 @@
+appId: com.techlapse.deploy-control
+productName: TechLapse Deploy Control
+copyright: Copyright © 2026 TechLapse Private Limited
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - main.js
+  - preload.js
+  - src/**/*
+  - assets/**/*
+  - node_modules/@fontsource/**/*
+  - package.json
+
+asar: true
+npmRebuild: false
+
+mac:
+  category: public.app-category.developer-tools
+  icon: assets/icon.png
+  target:
+    - dmg
+  darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+win:
+  icon: assets/icon.png
+  target:
+    - nsis
+  publisherName: TechLapse Private Limited
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: assets/icon.png
+  uninstallerIcon: assets/icon.png
+  installerHeaderIcon: assets/icon.png
+  createDesktopShortcut: true
+  shortcutName: TechLapse Deploy Control
+
+dmg:
+  title: TechLapse Deploy Control
+  icon: assets/icon.png
+  window:
+    width: 540
+    height: 380
